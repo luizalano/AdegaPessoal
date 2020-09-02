@@ -11,7 +11,10 @@ class Apelacao():
     banco = 'mysql'
 
     def __init__(self):
-        self.con, self.cursor = conectaMySql('masteradega', 'Adeg@W!ne1', 'adega.mysql.uhserver.com', 'adega')
+        #self.con, self.cursor = conectaMySql('masteradega', 'Adeg@W!ne1', 'adega.mysql.uhserver.com', 'adega')
+        listacon = conectaBanco('mysql', 'masteradega', 'Adeg@W!ne1', 'adega.mysql.uhserver.com', 'adega', 0)
+        self.con = listacon[0]
+        self.cursor = listacon[1]
         if self.con == None:
             sys.exit()
 
