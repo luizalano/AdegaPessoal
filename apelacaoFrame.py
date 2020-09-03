@@ -49,9 +49,14 @@ class FrmApelacao(FrameMG):
         # self.grid.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.selecionaLinha)
         self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.selecionaLinha, self.grid)
 
+        self.txtNomeApelacao.Bind(wx.EVT_KILL_FOCUS, self.perdeufoco)
+
         self.encheGrid()
 
         self.Show()
+
+    def perdeufoco(self, event):
+        print ('Acabou de perder o foco')
 
     def pesquisaPais(self, event):
         chave = self.txtPaisChave.GetValue()

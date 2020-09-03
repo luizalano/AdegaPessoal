@@ -18,6 +18,7 @@ class FrmApelacaoSafra(FrameMG):
 
         self.hoje = datetime.now()
         self.anoAtual = self.hoje.year
+        self.colunaGrid = 0
 
         super(FrmApelacaoSafra, self).__init__(None, 'Cadastro de safras por apelações', 800, 700, 0)
 
@@ -52,7 +53,8 @@ class FrmApelacaoSafra(FrameMG):
         # validator=self.validaSafra())
         label06, self.txtNota = self.criaCaixaDeTexto(self.painel, 13, 80, 520, 'Nota', 2, xcol=88, tamanho=3)
 
-        self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.selecionaLinha, self.grid)
+        self.grid.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.selecionaLinha)
+        self.grid.Bind(wx.EVT_LIST_COL_CLICK, self.pegaColuna)
         self.Bind(wx.EVT_TEXT, self.validaSafra(), self.txtSafra)
 
         self.encheGrid()
@@ -107,7 +109,8 @@ class FrmApelacaoSafra(FrameMG):
         self.grid.InsertColumn(0, 'Nome da apelação', width=self.larguraEmPx(30))
 
         indice = 0
-        for i in range(menor, maior + 1):
+        #for i in range(menor, maior + 1):
+        for i in range(maior, menor -1, -1):
             indice += 1
             self.grid.InsertColumn(indice, str(i), width=self.larguraEmPx(5))
 
@@ -122,7 +125,7 @@ class FrmApelacaoSafra(FrameMG):
                 listaApelacao.clear()
                 listaApelacao.append(row[2])
 
-                for i in range(menor, maior + 1):
+                for i in range(maior, menor -1, -1):
                     listaApelacao.append(0)
 
             if atual != anterior:
@@ -132,12 +135,13 @@ class FrmApelacaoSafra(FrameMG):
                 listaApelacao.clear()
                 listaApelacao.append(row[2])
 
-                for i in range(menor, maior + 1):
+                for i in range(maior, menor -1, -1):
                     listaApelacao.append(0)
-            else:
-                ano = row[3]
-                indice = ano - menor + 1
-                listaApelacao[indice] = row[4]
+
+            ano = row[3]
+            #indice = ano - menor + 1
+            indice = maior - ano + 1
+            listaApelacao[indice] = row[4]
 
         self.grid.Append(listaApelacao)
 
@@ -160,42 +164,59 @@ class FrmApelacaoSafra(FrameMG):
         self.botaoDelete.Disable()
         self.botaoPesquisa.Disable()
 
+    def pegaColuna(self, event):
+        self.colunaGrid = event.GetColumn()
+
     def selecionaLinha(self, event):
-        item = self.grid.GetFocusedItem()
+        #self.colunaGrid = event.GetColumn()
+        if self.colunaGrid > 0:
+            item = self.grid.GetFocusedItem()
+            nomeApelacao = self.grid.GetItemText(item, 0)
 
-        idApelacaoSafra = self.grid.GetItemText(item, 0)
+            rowid = self.grid.GetColumn(self.colunaGrid)
+            safra = int(rowid.GetText())
 
-        if idApelacaoSafra.isdigit():
-            lista = self.apelacaoSafra.buscaApelacaoSafra(idApelacaoSafra)
+            if len(nomeApelacao) > 0:
+                lista = self.apelacaoSafra.buscaApelacaoSafraPorNomeSafra(nomeApelacao, safra)
 
-            self.txtId.SetValue(str(lista[0]))
-            self.txtNomeApelacao.SetValue(lista[2])
-            self.txtIdApelacao.SetValue(str(lista[1]))
-            self.txtSafra.SetValue(str(lista[3]))
-            self.txtNota.SetValue(str(lista[4]))
+                if len(lista) >= 1:
+                    self.txtId.SetValue(str(lista[0]))
+                    self.txtNomeApelacao.SetValue(lista[2])
+                    self.txtIdApelacao.SetValue(str(lista[1]))
+                    self.txtSafra.SetValue(str(lista[3]))
+                    self.txtNota.SetValue(str(lista[4]))
 
-            self.txtApelacaoChave.Enable()
-            self.txtSafra.Enable()
-            self.txtNota.Enable()
+                    self.txtApelacaoChave.Enable()
+                    self.txtSafra.Enable()
+                    self.txtNota.Enable()
 
-            self.botaoSalva.Enable()
-            self.botaoDelete.Enable()
-            self.botaoPesquisa.Enable()
+                    self.botaoSalva.Enable()
+                    self.botaoDelete.Enable()
+                    self.botaoPesquisa.Enable()
+                else:
+                    listaApelacao = self.apelacao.buscaApelacaoPorNome(nomeApelacao)
+                    self.habilitaNovo(event)
+                    self.txtIdApelacao.SetValue(str(listaApelacao[0]))
+                    self.txtNomeApelacao.SetValue(listaApelacao[1])
+                    self.txtSafra.SetValue(str(safra))
+
+
 
     def salvaElemento(self, event):
-        self.apelacaoSafra.setidApelacao(self.txtIdApelacao.GetValue())
-        self.apelacaoSafra.setnota(int(self.txtNota.GetValue()))
-        self.apelacaoSafra.setsafra(int(self.txtSafra.GetValue()))
+        if len(self.txtIdApelacao.GetValue()) > 0:
+            self.apelacaoSafra.setidApelacao(self.txtIdApelacao.GetValue())
+            self.apelacaoSafra.setnota(int(self.txtNota.GetValue()))
+            self.apelacaoSafra.setsafra(int(self.txtSafra.GetValue()))
 
-        if self.insert:
-            self.apelacaoSafra.insere()
-            self.insert = False
-        else:
-            self.apelacaoSafra.update(str(self.txtId.GetValue()))
+            if self.insert:
+                self.apelacaoSafra.insere()
+                self.insert = False
+            else:
+                self.apelacaoSafra.update(str(self.txtId.GetValue()))
 
-        self.limpaElementos()
+            self.limpaElementos()
 
-        self.encheGrid()
+            self.encheGrid()
 
     def deletaElemento(self, event):
         super(FrmApelacaoSafra, self).deletaElemento(event)

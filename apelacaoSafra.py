@@ -66,6 +66,32 @@ class ApelacaoSafra():
         a = 0
         return 0
 
+    def buscaApelacaoSafraPorNomeSafra(self, argNomeApelacao, argSafra):
+        clausulaSql  = "select aps.idapelacaosafra, aps.idapelacao, a.nomeapelacao, aps.safra, aps.nota "
+        clausulaSql += "from apelacaosafra as aps join apelacao as a on aps.idapelacao = a.idapelacao "
+        clausulaSql += "where aps.safra = " +  str(argSafra) + " and a.nomeapelacao = '"
+        clausulaSql += argNomeApelacao + "';"
+
+        try:
+            self.cursor.execute(clausulaSql)
+        except:
+            dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao buscar safra ' + str(argSafra) + ' de ' + argNomeApelacao + '!',
+                                   wx.OK | wx.ICON_ERROR)
+            result = dlg.ShowModal()
+
+        lista = []
+
+        row = self.cursor.fetchone()
+        if row != None:
+            lista.append(row[0])
+            lista.append(row[1])
+            lista.append(row[2])
+            lista.append(row[3])
+            lista.append(row[4])
+
+        return lista
+
+
     def buscaApelacaoSafra(self, argId):
         clausulaSql  = 'select aps.idapelacaosafra, aps.idapelacao, a.nomeapelacao, aps.safra, aps.nota '
         clausulaSql += 'from apelacaosafra as aps join apelacao as a on aps.idapelacao = a.idapelacao '

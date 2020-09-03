@@ -1,4 +1,5 @@
 # coding: utf-8
+import sys
 from pacotesMG.conectaDataBaseMG import *
 from pacotesMG.diversos import *
 
@@ -13,7 +14,7 @@ class Apelacao():
     def __init__(self):
 
         #self.con, self.cursor = conectaMySql('masteradega', 'Adeg@W!ne1', 'adega.mysql.uhserver.com', 'adega')
-        listacon = conectaBanco('mysql', 'masteradega', 'Adeg@W!ne1', 'adega.mysql.uhserver.com', 'adega', 0)
+        listacon = conectaBanco('mysql', 'masteradega', 'Adeg@W!ne1', 'adega.mysql.uhserver.com', 'adega')
         self.con = listacon[0]
         self.cursor = listacon[1]
 
@@ -58,6 +59,27 @@ class Apelacao():
             lista.append(str(row[0]) + '|' + row[1])
 
             row = self.cursor.fetchone()
+
+        return lista
+
+    def buscaApelacaoPorNome(self, chave):
+        clausulaSql = "select idapelacao, nomeapelacao from apelacao where "
+        clausulaSql += " upper(nomeapelacao) = upper('" + chave + "');"
+
+        try:
+            self.cursor.execute(clausulaSql)
+        except:
+            dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao pesquisar apelação', wx.OK | wx.ICON_ERROR)
+            result = dlg.ShowModal()
+
+        lista = []
+
+        row = self.cursor.fetchone()
+
+        if row != None:
+            lista.clear()
+            lista.append(row[0])
+            lista.append(row[1])
 
         return lista
 
