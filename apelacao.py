@@ -1,6 +1,6 @@
 # coding: utf-8
 import sys
-from pacotesMG.conectaDataBaseMG import *
+
 from pacotesMG.diversos import *
 from pacotesMG.dataBaseFunctionMG import *
 
