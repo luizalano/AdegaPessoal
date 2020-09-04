@@ -1,5 +1,5 @@
 # coding: utf-8
-from pacotesMG.conectaDataBaseMG import *
+from pacotesMG.dataBaseFunctionMG import *
 from pacotesMG.diversos import *
 
 
@@ -9,11 +9,12 @@ class Pais():
     nomeCapital = ''
     iso2 = ''
     iso3 = ''
-    banco = 'mysql'
 
     def __init__(self):
-        self.con, self.cursor = conectaMySql('masteradega', 'Adeg@W!ne1', 'adega.mysql.uhserver.com', 'adega')
-        if self.con == None:
+        
+        self.conexao = ConMG('parametros.json')
+        
+        if self.conexao.con == None:
             sys.exit()
 
     def getAll(self):
@@ -21,18 +22,18 @@ class Pais():
         clausulaSql += 'from pais order by nomepais;'
 
         try:
-            self.cursor.execute(clausulaSql)
+            self.conexao.cursor.execute(clausulaSql)
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao ler país', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
 
         lista = []
 
-        row = self.cursor.fetchone()
+        row = self.conexao.cursor.fetchone()
         while row != None:
             lista.append([row[0], row[1], row[2], row[3], row[4]])
 
-            row = self.cursor.fetchone()
+            row = self.conexao.cursor.fetchone()
 
         return lista
 
@@ -41,20 +42,39 @@ class Pais():
         clausulaSql += " upper(nomepais) like upper('%" + chave + "%') order by nomepais;"
 
         try:
-            self.cursor.execute(clausulaSql)
+            self.conexao.cursor.execute(clausulaSql)
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao pesquisar país', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
 
         lista = []
 
-        row = self.cursor.fetchone()
+        row = self.conexao.cursor.fetchone()
         while row != None:
             lista.append(str(row[0]) + '|' + row[1])
 
-            row = self.cursor.fetchone()
+            row = self.conexao.cursor.fetchone()
 
         return lista
+
+    def buscaIdPais(self, argNome):
+        clausulaSql = "select idpais "
+        clausulaSql += "from pais where nomepais = '" + argNome + "';"
+
+        try:
+            self.conexao.cursor.execute(clausulaSql)
+        except:
+            dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao buscar pais com pelo nome ' + argNome + '!',
+                                   wx.OK | wx.ICON_ERROR)
+            result = dlg.ShowModal()
+
+        row = self.conexao.cursor.fetchone()
+
+        idPais = 0
+        if row != None:
+            idPais =row[0]
+
+        return idPais
 
     def buscaPais(self, argId):
         clausulaSql = 'select idpais, nomepais, nomecapital, iso2, iso3 '
@@ -62,7 +82,7 @@ class Pais():
         clausulaSql += str(argId) + ' order by nomepais;'
 
         try:
-            self.cursor.execute(clausulaSql)
+            self.conexao.cursor.execute(clausulaSql)
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao buscar pais com ID ' + str(argId) + '!',
                                    wx.OK | wx.ICON_ERROR)
@@ -70,7 +90,7 @@ class Pais():
 
         lista = []
 
-        row = self.cursor.fetchone()
+        row = self.conexao.cursor.fetchone()
         if row != None:
             lista.append(row[0])
             lista.append(row[1])
@@ -101,8 +121,8 @@ class Pais():
         clausulaSql += "'" + tiraAspas(self.iso2) + "', '" + tiraAspas(self.iso3) + "');"
 
         try:
-            self.cursor.execute(clausulaSql)
-            self.con.commit()
+            self.conexao.cursor.execute(clausulaSql)
+            self.conexao.con.commit()
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao inserir dados da pais!', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
@@ -116,8 +136,8 @@ class Pais():
         clausulaSql += "where idpais = " + str(argId) + ";"
 
         try:
-            self.cursor.execute(clausulaSql)
-            self.con.commit()
+            self.conexao.cursor.execute(clausulaSql)
+            self.conexao.con.commit()
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao atualizar os dados da pais!', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
@@ -127,14 +147,14 @@ class Pais():
         clausulaSql += 'where idpais = ' + str(argId) + ';'
 
         try:
-            self.cursor.execute(clausulaSql)
-            self.con.commit()
+            self.conexao.cursor.execute(clausulaSql)
+            self.conexao.con.commit()
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao eliminar os dados da pais!', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
 
     def sqlBuscaTamanho(self, coluna):
-        if self.banco == 'postgres':
+        if self.conexao.banco == 'postgres':
             clausulaSql = "select character_maximum_length from INFORMATION_SCHEMA.COLUMNS "
             clausulaSql += "where table_catalog = 'adega' and table_name = 'pais'"
             clausulaSql += "and column_name = '" + coluna + "';"
@@ -143,8 +163,8 @@ class Pais():
             clausulaSql += "where table_name = 'pais' and column_name = '" + coluna + "';"
 
         try:
-            self.cursor.execute(clausulaSql)
-            row = self.cursor.fetchone()
+            self.conexao.cursor.execute(clausulaSql)
+            row = self.conexao.cursor.fetchone()
             while row != None:
                 return row[0]
         except:

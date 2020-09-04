@@ -1,6 +1,6 @@
 # coding: utf-8
 import sys
-from pacotesMG.conectaDataBaseMG import *
+from pacotesMG.dataBaseFunctionMG import *
 from pacotesMG.diversos import *
 
 class Tenuta():
@@ -17,11 +17,11 @@ class Tenuta():
     telefone = ''
     email = ''
     contato = ''
-    banco = 'mysql'
 
     def __init__(self):
-        self.con, self.cursor = conectaMySql('masteradega', 'Adeg@W!ne1', 'adega.mysql.uhserver.com', 'adega')
-        if self.con == None:
+        self.conexao = ConMG('parametros.json')
+        
+        if self.conexao.con == None:
             sys.exit()
 
     def getAll(self):
@@ -31,20 +31,20 @@ class Tenuta():
         clausulaSql += 'order by t.nometenuta;'
 
         try:
-            self.cursor.execute(clausulaSql)
+            self.conexao.cursor.execute(clausulaSql)
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao ler tenutas', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
 
         lista = []
 
-        row = self.cursor.fetchone()
+        row = self.conexao.cursor.fetchone()
         while row != None:
             lista.append([row[0], row[1], row[2], row[3], row[4],
                           row[5], row[6], row[7], row[8], row[9],
                           row[10], row[11], row[12], row[13]])
 
-            row = self.cursor.fetchone()
+            row = self.conexao.cursor.fetchone()
 
         return lista
 
@@ -55,7 +55,7 @@ class Tenuta():
         clausulaSql += 'where t.idtenuta = ' + str(argId) + ';'
 
         try:
-            self.cursor.execute(clausulaSql)
+            self.conexao.cursor.execute(clausulaSql)
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao buscar tenuta com ID ' + str(argId) + '!',
                                    wx.OK | wx.ICON_ERROR)
@@ -63,7 +63,7 @@ class Tenuta():
 
         lista = []
 
-        row = self.cursor.fetchone()
+        row = self.conexao.cursor.fetchone()
         if row != None:
             lista.append(row[0])
             lista.append(row[1])
@@ -119,7 +119,7 @@ class Tenuta():
         self.email = arg
         
     def setcontato(self, arg):
-        self.contato = arg
+        self.conexao.contato = arg
 
     def insere(self):
         clausulaSql = "insert into tenuta (idtenuta, nometenuta, idpais, regiao, cidade, estado" \
@@ -136,11 +136,11 @@ class Tenuta():
         clausulaSql += "'" + self.cep + "', "
         clausulaSql += "'" + self.telefone + "', "
         clausulaSql += "'" + self.email + "', "
-        clausulaSql += "'" + self.contato + "'); "
+        clausulaSql += "'" + self.conexao.contato + "'); "
 
         try:
-            self.cursor.execute(clausulaSql)
-            self.con.commit()
+            self.conexao.cursor.execute(clausulaSql)
+            self.conexao.con.commit()
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao inserir dados da tenuta!', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
@@ -159,14 +159,12 @@ class Tenuta():
         clausulaSql += "cep = '"        + self.cep + "', "
         clausulaSql += "telefone = '"   + self.telefone + "', "
         clausulaSql += "email = '"      + self.email + "', "
-        clausulaSql += "contato = '"    + self.contato + "' "
+        clausulaSql += "contato = '"    + self.conexao.contato + "' "
         clausulaSql += "where idtenuta = " + str(argId) + ";"
 
-        print(clausulaSql)
-
         try:
-            self.cursor.execute(clausulaSql)
-            self.con.commit()
+            self.conexao.cursor.execute(clausulaSql)
+            self.conexao.con.commit()
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao atualizar os dados da tenuta!', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
@@ -176,14 +174,14 @@ class Tenuta():
         clausulaSql += 'where idtenuta = ' + str(argId) + ';'
 
         try:
-            self.cursor.execute(clausulaSql)
-            self.con.commit()
+            self.conexao.cursor.execute(clausulaSql)
+            self.conexao.con.commit()
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao eliminar os dados da tenuta!', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
 
     def sqlBuscaTamanho(self, coluna):
-        if self.banco == 'postgres':
+        if self.conexao.banco == 'postgres':
             clausulaSql = "select character_maximum_length from INFORMATION_SCHEMA.COLUMNS "
             clausulaSql += "where table_catalog = 'adega' and table_name = 'tenuta'"
             clausulaSql += "and column_name = '" + coluna + "';"
@@ -192,8 +190,8 @@ class Tenuta():
             clausulaSql += "where table_name = 'tenuta' and column_name = '" + coluna + "';"
 
         try:
-            self.cursor.execute(clausulaSql)
-            row = self.cursor.fetchone()
+            self.conexao.cursor.execute(clausulaSql)
+            row = self.conexao.cursor.fetchone()
             while row != None:
                 return row[0]
         except:

@@ -1,0 +1,10 @@
+{"database": {
+    "banco": "postgres",
+    "usuario": "postgres",
+    "senha": "seriate",
+    "porta": 5432,
+    "local": "localhost",
+    "base": "Adega"
+    }
+}
+

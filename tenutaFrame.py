@@ -25,26 +25,18 @@ class FrmTenuta(FrameMG):
         Y = self.posy(0)
         tamX = self.larguraEmPx(80)
         tamY = self.alturaEmPx(15)
-        
+
         x0 = 83
 
         self.grid = wx.ListCtrl(self.painel, pos=(X, Y), size=(tamX, tamY),
                                 style=wx.LC_REPORT | wx.LC_VRULES | wx.LC_HRULES | wx.BORDER_SUNKEN)
-        
+
         label01, self.txtId = self.criaCaixaDeTexto(self.painel, 0, 10, 40, 'ID', 0, xcol=x0+1, tamanho = 6)
         label02, self.txtNomeTenuta = self.criaCaixaDeTexto(self.painel, 0, 80, 520, 'Nome da vinícola',
                                                              self.tenuta.sqlBuscaTamanho('nometenuta'), xcol = x0 + 11, tamanho = 70)
 
-        label03, self.txtPaisChave = self.criaCaixaDeTexto(self.painel, 1, 10, 250, 'Pesquisa do país',
-                                                             self.pais.sqlBuscaTamanho('nomepais'), xcol = x0 + 1, tamanho = 20)
-
-        iconePesquisa = wx.Bitmap(self.caminho + 'search32.ico')
-        self.botaoPesquisa = wx.BitmapButton(self.painel, bitmap=iconePesquisa,
-            pos=(self.posx(x0 + 24), self.posy(1)))
-        self.botaoPesquisa.Bind(wx.EVT_BUTTON, self.pesquisaPais)
-
-        label04, self.txtIdPais = self.criaCaixaDeTexto(self.painel, 1, 340, 40, 'ID', 0, xcol = x0 + 32, tamanho = 6)
-        label05, self.txtNomePais = self.criaCaixaDeTexto(self.painel, 1, 400, 200, 'Nome do país', 0, xcol = x0 + 42, tamanho = 39)
+        label03, self.cbPais = self.criaCombobox(self.painel, label = 'País', linha=1, coluna = x0 + 1,
+                                                 tamanho=80, maxlen=self.pais.sqlBuscaTamanho('nomepais'))
 
         label06, self.txtRegiao = self.criaCaixaDeTexto(self.painel, 2, -1, -1, 'Região',
                                                           self.tenuta.sqlBuscaTamanho('regiao'),
@@ -81,6 +73,7 @@ class FrmTenuta(FrameMG):
                                                           self.tenuta.sqlBuscaTamanho('contato'),
                                                           xcol = x0 + 1, tamanho = 80)
 
+
         self.limpaElementos()
 
         # self.grid.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.selecionaLinha)
@@ -90,26 +83,12 @@ class FrmTenuta(FrameMG):
 
         self.Show()
 
-    def pesquisaPais(self, event):
-        chave = self.txtPaisChave.GetValue()
+    def encheComboBoxPais(self):
+        lista = self.pais.getAll()
+        self.cbPais.Clear()
 
-        if len(chave) > 0:
-            lista = self.pais.pesquisaPais(chave)
-
-            resultado = None
-
-            pesquisaDialog = wx.SingleChoiceDialog(None, 'Escolha o país correto',
-                                                   'Pesquisa países', lista, style=wx.OK | wx.CANCEL | wx.CENTRE,
-                                                   pos=wx.DefaultPosition)
-            if pesquisaDialog.ShowModal() == wx.ID_OK:
-                resultado = pesquisaDialog.GetStringSelection()
-
-            if resultado:
-                res = resultado.split('|')
-                self.txtNomePais.SetValue(res[1])
-                self.txtIdPais.SetValue(str(res[0]))
-
-            pesquisaDialog.Destroy
+        for row in lista:
+            self.cbPais.Append(row[1])
 
     def encheGrid(self):
         '''
@@ -128,12 +107,12 @@ class FrmTenuta(FrameMG):
         for row in self.lista:
             self.grid.Append([row[0], row[1], row[3], row[4]])
 
+        self.encheComboBoxPais()
+
     def limpaElementos(self):
         self.txtId.Clear()
         self.txtNomeTenuta.Clear()
-        self.txtPaisChave.Clear()
-        self.txtIdPais.Clear()
-        self.txtNomePais.Clear()
+        self.cbPais.SetSelection(-1)
         self.txtRegiao.Clear()
         self.txtCidade.Clear()
         self.txtEstado.Clear()
@@ -147,9 +126,7 @@ class FrmTenuta(FrameMG):
 
         self.txtId.Disable()
         self.txtNomeTenuta.Disable()
-        self.txtPaisChave.Disable()
-        self.txtIdPais.Disable()
-        self.txtNomePais.Disable()
+        self.cbPais.Disable()
         self.txtRegiao.Disable()
         self.txtCidade.Disable()
         self.txtEstado.Disable()
@@ -163,7 +140,20 @@ class FrmTenuta(FrameMG):
 
         self.botaoSalva.Disable()
         self.botaoDelete.Disable()
-        self.botaoPesquisa.Disable()
+
+    def indiceDoPaisCb(self, nomePais):
+
+        indice = 0
+        i = 0
+        max = self.cbPais.Count
+        while i < max:
+            paisLido = self.cbPais.GetString(i)
+            if paisLido == nomePais:
+                indice = i
+                i = max
+            i += 1
+
+        return indice
 
     def selecionaLinha(self, event):
         '''
@@ -178,25 +168,34 @@ class FrmTenuta(FrameMG):
         if idTenuta.isdigit():
             lista = self.tenuta.buscaTenuta(idTenuta)
 
-            self.txtPaisChave.Clear()
             self.txtId.SetValue(str(lista[0]))
             self.txtNomeTenuta.SetValue(lista[1])
-            self.txtIdPais.SetValue(str(lista[2]))
-            self.txtNomePais.SetValue(lista[3])
 
-            self.txtRegiao.SetValue(lista[4])
-            self.txtCidade.SetValue(lista[5])
-            self.txtEstado.SetValue(lista[6])
-            self.txtEndereco1.SetValue(lista[7])
-            self.txtEndereco2.SetValue(lista[8])
-            self.txtEndereco3.SetValue(lista[9])
-            self.txtCep.SetValue(lista[10])
-            self.txtTelefone.SetValue(lista[11])
-            self.txtEmail.SetValue(lista[12])
-            self.txtContato.SetValue(lista[13])
+            self.cbPais.SetSelection(self.indiceDoPaisCb(lista[3]))
+
+            if lista[4] is not None:
+                self.txtRegiao.SetValue(lista[4])
+            if lista[5] is not None:
+                self.txtCidade.SetValue(lista[5])
+            if lista[6] is not None:
+                self.txtEstado.SetValue(lista[6])
+            if lista[7] is not None:
+                self.txtEndereco1.SetValue(lista[7])
+            if lista[8] is not None:
+                self.txtEndereco2.SetValue(lista[8])
+            if lista[9] is not None:
+                self.txtEndereco3.SetValue(lista[9])
+            if lista[10] is not None:
+                self.txtCep.SetValue(lista[10])
+            if lista[11] is not None:
+                self.txtTelefone.SetValue(lista[11])
+            if lista[12] is not None:
+                self.txtEmail.SetValue(lista[12])
+            if lista[13] is not None:
+                self.txtContato.SetValue(lista[13])
 
             self.txtNomeTenuta.Enable()
-            self.txtPaisChave.Enable()
+            self.cbPais.Enable()
             self.txtRegiao.Enable()
             self.txtCidade.Enable()
             self.txtEstado.Enable()
@@ -210,11 +209,11 @@ class FrmTenuta(FrameMG):
 
             self.botaoSalva.Enable()
             self.botaoDelete.Enable()
-            self.botaoPesquisa.Enable()
 
     def salvaElemento(self, event):
+
         self.tenuta.setnomeTenuta(self.txtNomeTenuta.GetValue())
-        self.tenuta.setidPais(str(self.txtIdPais.GetValue()))
+        self.tenuta.setidPais(str(self.pais.buscaIdPais(self.cbPais.GetValue())))
         self.tenuta.setregiao((self.txtRegiao.GetValue()))
         self.tenuta.setcidade(self.txtCidade.GetValue())
         self.tenuta.setestado(self.txtEstado.GetValue())
@@ -249,7 +248,7 @@ class FrmTenuta(FrameMG):
         self.limpaElementos()
 
         self.txtNomeTenuta.Enable()
-        self.txtPaisChave.Enable()
+        self.cbPais.Enable()
         self.txtRegiao.Enable()
         self.txtCidade.Enable()
         self.txtEstado.Enable()
@@ -262,7 +261,6 @@ class FrmTenuta(FrameMG):
         self.txtContato.Enable()
 
         self.botaoSalva.Enable()
-        self.botaoPesquisa.Enable()
 
         self.insert = True
 

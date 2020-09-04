@@ -1,7 +1,6 @@
 # coding: utf-8
 from apelacaoSafra import *
 from apelacao import *
-from pacotesMG.conectaDataBaseMG import *
 from datetime import date, datetime
 from pacotesMG.wxComponetesMG import FrameMG
 import wx
@@ -28,26 +27,17 @@ class FrmApelacaoSafra(FrameMG):
         X = self.posx(1)
         Y = self.posy(0)
         tamX = self.larguraEmPx(106)
-        tamY = self.alturaEmPx(12)
+        tamY = self.alturaEmPx(13)
 
         self.grid = wx.ListCtrl(self.painel, pos=(X, Y), size=(tamX, tamY),
                                 style=wx.LC_REPORT | wx.LC_VRULES | wx.LC_HRULES | wx.BORDER_SUNKEN)
 
-        label01, self.txtId = self.criaCaixaDeTexto(self.painel, 12, 10, 40, 'ID', 0, xcol=1, tamanho=6)
+        label01, self.txtId = self.criaCaixaDeTexto(self.painel, 13, 10, 40, 'ID', 0, xcol=1, tamanho=6)
 
-        label02, self.txtApelacaoChave = self.criaCaixaDeTexto(self.painel, 12, 10, 250,
-                                                               'Entre com o termo para pesquisa da apelação',
-                                                               self.apelacao.sqlBuscaTamanho('nomeapelacao'),
-                                                               xcol=11, tamanho=80)
 
-        iconePesquisa = wx.Bitmap(self.caminho + 'search32.ico')
-        self.botaoPesquisa = wx.BitmapButton(self.painel, bitmap=iconePesquisa,
-                                             pos=(680, self.posy(12)))
-        self.botaoPesquisa.Bind(wx.EVT_BUTTON, self.pesquisaApelacao)
+        label02, self.cbNomeApelacao = self.criaCombobox(self.painel, label = 'Nome da Apelação', linha=13, coluna = 11,
+                                                 tamanho=60, maxlen=self.apelacao.sqlBuscaTamanho('nomeapelacao'))
 
-        label03, self.txtIdApelacao = self.criaCaixaDeTexto(self.painel, 13, 340, 40, 'ID', 0, xcol=1, tamanho=6)
-        label04, self.txtNomeApelacao = self.criaCaixaDeTexto(self.painel, 13, 400, 200, 'Nome da apelação', 0,
-                                                              xcol=11, tamanho=60)
 
         label05, self.txtSafra = self.criaCaixaDeTexto(self.painel, 13, 80, 520, 'Safra', 4, xcol=78, tamanho=5)
         # validator=self.validaSafra())
@@ -75,26 +65,12 @@ class FrmApelacaoSafra(FrameMG):
                                            'Erro de conteúdo', wx.OK | wx.ICON_ERROR)
                     result = dlg.ShowModal()
 
-    def pesquisaApelacao(self, event):
-        chave = self.txtApelacaoChave.GetValue()
+    def encheComboBoxApelacao(self):
+        lista = self.apelacao.getAll()
+        self.cbNomeApelacao.Clear()
 
-        if len(chave) > 0:
-            lista = self.apelacao.pesquisaApelacao(chave)
-
-            resultado = None
-
-            pesquisaDialog = wx.SingleChoiceDialog(None, 'Escolha a apelação correta',
-                                                   'Pesquisa apelações', lista, style=wx.OK | wx.CANCEL | wx.CENTRE,
-                                                   pos=wx.DefaultPosition)
-            if pesquisaDialog.ShowModal() == wx.ID_OK:
-                resultado = pesquisaDialog.GetStringSelection()
-
-            if resultado:
-                res = resultado.split('|')
-                self.txtNomeApelacao.SetValue(res[1])
-                self.txtIdApelacao.SetValue(str(res[0]))
-
-            pesquisaDialog.Destroy
+        for row in lista:
+            self.cbNomeApelacao.Append(row[1])
 
     def encheGrid(self):
         '''
@@ -109,7 +85,7 @@ class FrmApelacaoSafra(FrameMG):
         self.grid.InsertColumn(0, 'Nome da apelação', width=self.larguraEmPx(30))
 
         indice = 0
-        #for i in range(menor, maior + 1):
+
         for i in range(maior, menor -1, -1):
             indice += 1
             self.grid.InsertColumn(indice, str(i), width=self.larguraEmPx(5))
@@ -139,33 +115,43 @@ class FrmApelacaoSafra(FrameMG):
                     listaApelacao.append(0)
 
             ano = row[3]
-            #indice = ano - menor + 1
+
             indice = maior - ano + 1
             listaApelacao[indice] = row[4]
 
         self.grid.Append(listaApelacao)
 
+        self.encheComboBoxApelacao()
+
     def limpaElementos(self):
         self.txtId.Clear()
-        self.txtApelacaoChave.Clear()
-        self.txtIdApelacao.Clear()
-        self.txtNomeApelacao.Clear()
+        self.cbNomeApelacao.SetSelection(-1)
         self.txtSafra.Clear()
         self.txtNota.Clear()
 
         self.txtId.Disable()
-        self.txtApelacaoChave.Disable()
-        self.txtIdApelacao.Disable()
-        self.txtNomeApelacao.Disable()
+        self.cbNomeApelacao.Disable()
         self.txtSafra.Disable()
         self.txtNota.Disable()
 
         self.botaoSalva.Disable()
         self.botaoDelete.Disable()
-        self.botaoPesquisa.Disable()
 
     def pegaColuna(self, event):
         self.colunaGrid = event.GetColumn()
+
+    def indiceDaApelacaoCb(self, nomeApelacao):
+        indice = 0
+        i = 0
+        max = self.cbNomeApelacao.Count
+        while i < max:
+            lido = self.cbNomeApelacao.GetString(i)
+            if lido == nomeApelacao:
+                indice = i
+                i = max
+            i += 1
+
+        return indice
 
     def selecionaLinha(self, event):
         #self.colunaGrid = event.GetColumn()
@@ -181,42 +167,38 @@ class FrmApelacaoSafra(FrameMG):
 
                 if len(lista) >= 1:
                     self.txtId.SetValue(str(lista[0]))
-                    self.txtNomeApelacao.SetValue(lista[2])
-                    self.txtIdApelacao.SetValue(str(lista[1]))
+
+                    self.cbNomeApelacao.SetSelection(self.indiceDaApelacaoCb(lista[2]))
+
                     self.txtSafra.SetValue(str(lista[3]))
                     self.txtNota.SetValue(str(lista[4]))
 
-                    self.txtApelacaoChave.Enable()
+                    self.cbNomeApelacao.Enable()
                     self.txtSafra.Enable()
                     self.txtNota.Enable()
 
                     self.botaoSalva.Enable()
                     self.botaoDelete.Enable()
-                    self.botaoPesquisa.Enable()
                 else:
                     listaApelacao = self.apelacao.buscaApelacaoPorNome(nomeApelacao)
                     self.habilitaNovo(event)
-                    self.txtIdApelacao.SetValue(str(listaApelacao[0]))
-                    self.txtNomeApelacao.SetValue(listaApelacao[1])
+                    self.cbNomeApelacao.SetSelection(self.indiceDaApelacaoCb(listaApelacao[1]))
                     self.txtSafra.SetValue(str(safra))
 
-
-
     def salvaElemento(self, event):
-        if len(self.txtIdApelacao.GetValue()) > 0:
-            self.apelacaoSafra.setidApelacao(self.txtIdApelacao.GetValue())
-            self.apelacaoSafra.setnota(int(self.txtNota.GetValue()))
-            self.apelacaoSafra.setsafra(int(self.txtSafra.GetValue()))
+        self.apelacaoSafra.setidApelacao(self.apelacao.buscaIdApelacao(self.cbNomeApelacao.GetValue()))
+        self.apelacaoSafra.setnota(int(self.txtNota.GetValue()))
+        self.apelacaoSafra.setsafra(int(self.txtSafra.GetValue()))
 
-            if self.insert:
-                self.apelacaoSafra.insere()
-                self.insert = False
-            else:
-                self.apelacaoSafra.update(str(self.txtId.GetValue()))
+        if self.insert:
+            self.apelacaoSafra.insere()
+            self.insert = False
+        else:
+            self.apelacaoSafra.update(str(self.txtId.GetValue()))
 
-            self.limpaElementos()
+        self.limpaElementos()
 
-            self.encheGrid()
+        self.encheGrid()
 
     def deletaElemento(self, event):
         super(FrmApelacaoSafra, self).deletaElemento(event)
@@ -230,12 +212,11 @@ class FrmApelacaoSafra(FrameMG):
     def habilitaNovo(self, event):
         self.limpaElementos()
 
-        self.txtApelacaoChave.Enable()
+        self.cbNomeApelacao.Enable()
         self.txtSafra.Enable()
         self.txtNota.Enable()
 
         self.botaoSalva.Enable()
-        self.botaoPesquisa.Enable()
 
         self.insert = True
 

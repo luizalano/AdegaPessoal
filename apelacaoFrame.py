@@ -1,7 +1,6 @@
 # coding: utf-8
 from apelacao import *
 from pais import *
-from pacotesMG.conectaDataBaseMG import *
 
 from pacotesMG.wxComponetesMG import FrameMG
 import wx
@@ -33,23 +32,15 @@ class FrmApelacao(FrameMG):
         label02, self.txtNomeApelacao = self.criaCaixaDeTexto(self.painel, 12, 80, 520, 'Nome da apelação',
                                                              self.apelacao.sqlBuscaTamanho('nomeapelacao'), xcol = 11, tamanho = 71)
 
-        label03, self.txtPaisChave = self.criaCaixaDeTexto(self.painel, 13, 10, 250, 'Entre com o termo para pesquisa do país',
-                                                             self.pais.sqlBuscaTamanho('nomepais'), xcol = 1, tamanho = 30)
-
-        iconePesquisa = wx.Bitmap(self.caminho + 'search32.ico')
-        self.botaoPesquisa = wx.BitmapButton(self.painel, bitmap=iconePesquisa,
-            pos=(250, self.posy(13)))
-        self.botaoPesquisa.Bind(wx.EVT_BUTTON, self.pesquisaPais)
-
-        label04, self.txtIdPais = self.criaCaixaDeTexto(self.painel, 13, 340, 40, 'ID', 0, xcol = 42, tamanho = 6)
-        label05, self.txtNomePais = self.criaCaixaDeTexto(self.painel, 13, 400, 200, 'Nome do país', 0, xcol = 52, tamanho = 30)
+        label03, self.cbPais = self.criaCombobox(self.painel, label = 'País', linha=13, coluna = 1,
+                                                 tamanho=81, maxlen=self.pais.sqlBuscaTamanho('nomepais'))
 
         self.limpaElementos()
 
         # self.grid.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.selecionaLinha)
         self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.selecionaLinha, self.grid)
 
-        self.txtNomeApelacao.Bind(wx.EVT_KILL_FOCUS, self.perdeufoco)
+        #self.txtNomeApelacao.Bind(wx.EVT_KILL_FOCUS, self.perdeufoco)
 
         self.encheGrid()
 
@@ -58,26 +49,12 @@ class FrmApelacao(FrameMG):
     def perdeufoco(self, event):
         print ('Acabou de perder o foco')
 
-    def pesquisaPais(self, event):
-        chave = self.txtPaisChave.GetValue()
+    def encheComboBoxPais(self):
+        lista = self.pais.getAll()
+        self.cbPais.Clear()
 
-        if len(chave) > 0:
-            lista = self.pais.pesquisaPais(chave)
-
-            resultado = None
-
-            pesquisaDialog = wx.SingleChoiceDialog(None, 'Escolha o país correto',
-                                                   'Pesquisa países', lista, style=wx.OK | wx.CANCEL | wx.CENTRE,
-                                                   pos=wx.DefaultPosition)
-            if pesquisaDialog.ShowModal() == wx.ID_OK:
-                resultado = pesquisaDialog.GetStringSelection()
-
-            if resultado:
-                res = resultado.split('|')
-                self.txtNomePais.SetValue(res[1])
-                self.txtIdPais.SetValue(str(res[0]))
-
-            pesquisaDialog.Destroy
+        for row in lista:
+            self.cbPais.Append(row[1])
 
     def encheGrid(self):
         '''
@@ -93,22 +70,31 @@ class FrmApelacao(FrameMG):
         for row in self.lista:
             self.grid.Append([row[0], row[1], row[3]])
 
+        self.encheComboBoxPais()
+
     def limpaElementos(self):
         self.txtId.Clear()
         self.txtNomeApelacao.Clear()
-        self.txtPaisChave.Clear()
-        self.txtIdPais.Clear()
-        self.txtNomePais.Clear()
+        self.cbPais.SetSelection(-1)
 
         self.txtId.Disable()
         self.txtNomeApelacao.Disable()
-        self.txtPaisChave.Disable()
-        self.txtIdPais.Disable()
-        self.txtNomePais.Disable()
 
         self.botaoSalva.Disable()
         self.botaoDelete.Disable()
-        self.botaoPesquisa.Disable()
+
+    def indiceDoPaisCb(self, nomePais):
+        indice = 0
+        i = 0
+        max = self.cbPais.Count
+        while i < max:
+            paisLido = self.cbPais.GetString(i)
+            if paisLido == nomePais:
+                indice = i
+                i = max
+            i += 1
+
+        return indice
 
     def selecionaLinha(self, event):
         item = self.grid.GetFocusedItem()
@@ -120,19 +106,18 @@ class FrmApelacao(FrameMG):
 
             self.txtId.SetValue(str(lista[0]))
             self.txtNomeApelacao.SetValue(lista[1])
-            self.txtIdPais.SetValue(str(lista[2]))
-            self.txtNomePais.SetValue(lista[3])
+
+            self.cbPais.SetSelection(self.indiceDoPaisCb(lista[3]))
 
             self.txtNomeApelacao.Enable()
-            self.txtPaisChave.Enable()
+            self.cbPais.Enable()
 
             self.botaoSalva.Enable()
             self.botaoDelete.Enable()
-            self.botaoPesquisa.Enable()
 
     def salvaElemento(self, event):
         self.apelacao.setnomeApelacao(self.txtNomeApelacao.GetValue())
-        self.apelacao.setidPais(self.txtIdPais.GetValue())
+        self.apelacao.setidPais(str(self.pais.buscaIdPais(self.cbPais.GetValue())))
 
         if self.insert:
             self.apelacao.insere()
@@ -157,10 +142,9 @@ class FrmApelacao(FrameMG):
         self.limpaElementos()
 
         self.txtNomeApelacao.Enable()
-        self.txtPaisChave.Enable()
+        self.cbPais.Enable()
 
         self.botaoSalva.Enable()
-        self.botaoPesquisa.Enable()
 
         self.insert = True
 

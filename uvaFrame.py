@@ -1,7 +1,6 @@
 # coding: utf-8
 from uva import *
 from pais import *
-from pacotesMG.conectaDataBaseMG import *
 
 from pacotesMG.wxComponetesMG import FrameMG
 import wx
@@ -37,16 +36,9 @@ class FrmUva(FrameMG):
         self.rbCorCasca = wx.RadioBox(self.painel, label='Casca', pos=(610, Y),
             choices=(lista[0], lista[1]), style=wx.RA_SPECIFY_ROWS)
 
-        label03, self.txtPaisChave = self.criaCaixaDeTexto(self.painel, 13, 10, 250, 'Entre com o termo para pesquisa do país',
-                                                             self.pais.sqlBuscaTamanho('nomepais'), xcol = 1, tamanho = 30)
+        label03, self.cbPais = self.criaCombobox(self.painel, label = 'País', linha=13, coluna = 1,
+                                                 tamanho=81, maxlen=self.pais.sqlBuscaTamanho('nomepais'))
 
-        iconePesquisa = wx.Bitmap(self.caminho + 'search32.ico')
-        self.botaoPesquisa = wx.BitmapButton(self.painel, bitmap=iconePesquisa,
-            pos=(250, self.posy(13)))
-        self.botaoPesquisa.Bind(wx.EVT_BUTTON, self.pesquisaPais)
-
-        label04, self.txtIdPais = self.criaCaixaDeTexto(self.painel, 13, 340, 40, 'ID', 0, xcol = 42, tamanho = 6)
-        label05, self.txtNomePais = self.criaCaixaDeTexto(self.painel, 13, 400, 200, 'Nome do país', 0, xcol = 52, tamanho = 30)
 
         self.limpaElementos()
 
@@ -57,26 +49,12 @@ class FrmUva(FrameMG):
 
         self.Show()
 
-    def pesquisaPais(self, event):
-        chave = self.txtPaisChave.GetValue()
+    def encheComboBoxPais(self):
+        lista = self.pais.getAll()
+        self.cbPais.Clear()
 
-        if len(chave) > 0:
-            lista = self.pais.pesquisaPais(chave)
-
-            resultado = None
-
-            pesquisaDialog = wx.SingleChoiceDialog(None, 'Escolha o país correto',
-                                                   'Pesquisa países', lista, style=wx.OK | wx.CANCEL | wx.CENTRE,
-                                                   pos=wx.DefaultPosition)
-            if pesquisaDialog.ShowModal() == wx.ID_OK:
-                resultado = pesquisaDialog.GetStringSelection()
-
-            if resultado:
-                res = resultado.split('|')
-                self.txtNomePais.SetValue(res[1])
-                self.txtIdPais.SetValue(str(res[0]))
-
-            pesquisaDialog.Destroy
+        for row in lista:
+            self.cbPais.Append(row[1])
 
     def encheGrid(self):
         '''
@@ -97,23 +75,20 @@ class FrmUva(FrameMG):
                 corcasca = 'Branca'
             self.grid.Append([row[0], row[1], corcasca, row[4]])
 
+        self.encheComboBoxPais()
+
     def limpaElementos(self):
         self.txtId.Clear()
         self.txtNomeUva.Clear()
-        self.txtPaisChave.Clear()
-        self.txtIdPais.Clear()
-        self.txtNomePais.Clear()
+        self.cbPais.SetSelection(-1)
 
         self.txtId.Disable()
         self.txtNomeUva.Disable()
-        self.txtPaisChave.Disable()
-        self.txtIdPais.Disable()
-        self.txtNomePais.Disable()
+        self.cbPais.Disable()
         self.rbCorCasca.Disable()
 
         self.botaoSalva.Disable()
         self.botaoDelete.Disable()
-        self.botaoPesquisa.Disable()
 
     def selecionaLinha(self, event):
         item = self.grid.GetFocusedItem()
@@ -125,23 +100,35 @@ class FrmUva(FrameMG):
 
             self.txtId.SetValue(str(lista[0]))
             self.txtNomeUva.SetValue(lista[1])
-            self.txtIdPais.SetValue(str(lista[3]))
-            self.txtNomePais.SetValue(lista[4])
+
+            self.cbPais.SetSelection(self.indiceDoPaisCb(lista[4]))
 
             self.rbCorCasca.SetSelection(lista[2])
 
             self.txtNomeUva.Enable()
-            self.txtPaisChave.Enable()
+            self.cbPais.Enable()
             self.rbCorCasca.Enable()
 
             self.botaoSalva.Enable()
             self.botaoDelete.Enable()
-            self.botaoPesquisa.Enable()
+
+    def indiceDoPaisCb(self, nomePais):
+        indice = 0
+        i = 0
+        max = self.cbPais.Count
+        while i < max:
+            paisLido = self.cbPais.GetString(i)
+            if paisLido == nomePais:
+                indice = i
+                i = max
+            i += 1
+
+        return indice
 
     def salvaElemento(self, event):
         self.uva.setnomeUva(self.txtNomeUva.GetValue())
         self.uva.setcorCasca(self.rbCorCasca.GetSelection())
-        self.uva.setidPais(self.txtIdPais.GetValue())
+        self.uva.setidPais(str(self.pais.buscaIdPais(self.cbPais.GetValue())))
 
         if self.insert:
             self.uva.insere()
@@ -166,11 +153,10 @@ class FrmUva(FrameMG):
         self.limpaElementos()
 
         self.txtNomeUva.Enable()
-        self.txtPaisChave.Enable()
+        self.cbPais.Enable()
         self.rbCorCasca.Enable()
 
         self.botaoSalva.Enable()
-        self.botaoPesquisa.Enable()
 
         self.insert = True
 

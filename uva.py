@@ -1,5 +1,5 @@
 # coding: utf-8
-from pacotesMG.conectaDataBaseMG import *
+from pacotesMG.dataBaseFunctionMG import *
 from pacotesMG.diversos import *
 
 
@@ -9,11 +9,11 @@ class Uva():
     corCasca = 0
     idPais = 0
     nomePais = ''
-    banco = 'mysql'
 
     def __init__(self):
-        self.con, self.cursor = conectaMySql('masteradega', 'Adeg@W!ne1', 'adega.mysql.uhserver.com', 'adega')
-        if self.con == None:
+        self.conexao = ConMG('parametros.json')
+        
+        if self.conexao.con == None:
             sys.exit()
 
     def getAll(self):
@@ -22,18 +22,18 @@ class Uva():
         clausulaSql += 'order by u.nomeuva;'
 
         try:
-            self.cursor.execute(clausulaSql)
+            self.conexao.cursor.execute(clausulaSql)
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao ler uvas', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
 
         lista = []
 
-        row = self.cursor.fetchone()
+        row = self.conexao.cursor.fetchone()
         while row != None:
             lista.append([row[0], row[1], row[2], row[3], row[4]])
 
-            row = self.cursor.fetchone()
+            row = self.conexao.cursor.fetchone()
 
         return lista
 
@@ -42,18 +42,18 @@ class Uva():
         clausulaSql += " upper(nomeuva) like upper('%" + chave + "%') order by nomeuva;"
 
         try:
-            self.cursor.execute(clausulaSql)
+            self.conexao.cursor.execute(clausulaSql)
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao pesquisar uva', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
 
         lista = []
 
-        row = self.cursor.fetchone()
+        row = self.conexao.cursor.fetchone()
         while row != None:
             lista.append(str(row[0]) + '|' + row[1])
 
-            row = self.cursor.fetchone()
+            row = self.conexao.cursor.fetchone()
 
         return lista
 
@@ -64,7 +64,7 @@ class Uva():
         clausulaSql += str(argId) + ';'
 
         try:
-            self.cursor.execute(clausulaSql)
+            self.conexao.cursor.execute(clausulaSql)
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao buscar uva com ID ' + str(argId) + '!',
                                    wx.OK | wx.ICON_ERROR)
@@ -72,7 +72,7 @@ class Uva():
 
         lista = []
 
-        row = self.cursor.fetchone()
+        row = self.conexao.cursor.fetchone()
         if row != None:
             lista.append(row[0])
             lista.append(row[1])
@@ -100,8 +100,8 @@ class Uva():
         clausulaSql += str(self.idPais) + ");"
 
         try:
-            self.cursor.execute(clausulaSql)
-            self.con.commit()
+            self.conexao.cursor.execute(clausulaSql)
+            self.conexao.con.commit()
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao inserir dados da uva!', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
@@ -114,8 +114,8 @@ class Uva():
         clausulaSql += "where iduva = " + str(argId) + ";"
 
         try:
-            self.cursor.execute(clausulaSql)
-            self.con.commit()
+            self.conexao.cursor.execute(clausulaSql)
+            self.conexao.con.commit()
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao atualizar os dados da uva!', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
@@ -125,14 +125,14 @@ class Uva():
         clausulaSql += 'where iduva = ' + str(argId) + ';'
 
         try:
-            self.cursor.execute(clausulaSql)
-            self.con.commit()
+            self.conexao.cursor.execute(clausulaSql)
+            self.conexao.con.commit()
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao eliminar os dados da uva!', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
 
     def sqlBuscaTamanho(self, coluna):
-        if self.banco == 'postgres':
+        if self.conexao.banco == 'postgres':
             clausulaSql = "select character_maximum_length from INFORMATION_SCHEMA.COLUMNS "
             clausulaSql += "where table_catalog = 'adega' and table_name = 'uva'"
             clausulaSql += "and column_name = '" + coluna + "';"
@@ -141,8 +141,8 @@ class Uva():
             clausulaSql += "where table_name = 'uva' and column_name = '" + coluna + "';"
 
         try:
-            self.cursor.execute(clausulaSql)
-            row = self.cursor.fetchone()
+            self.conexao.cursor.execute(clausulaSql)
+            row = self.conexao.cursor.fetchone()
             while row != None:
                 return row[0]
         except:

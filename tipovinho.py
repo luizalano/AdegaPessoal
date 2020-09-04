@@ -1,16 +1,16 @@
 # coding: utf-8
-from pacotesMG.conectaDataBaseMG import *
+from pacotesMG.dataBaseFunctionMG import *
 from pacotesMG.diversos import *
 
 
 class TipoVinho():
     idTipoVinho = 0
     nomeTipoVinho = ''
-    banco = 'mysql'
 
     def __init__(self):
-        self.con, self.cursor = conectaMySql('masteradega', 'Adeg@W!ne1', 'adega.mysql.uhserver.com', 'adega')
-        if self.con == None:
+        self.conexao = ConMG('parametros.json')
+
+        if self.conexao.con == None:
             sys.exit()
 
     def getAll(self):
@@ -19,18 +19,18 @@ class TipoVinho():
         clausulaSql += 'order by nometipovinho;'
 
         try:
-            self.cursor.execute(clausulaSql)
+            self.conexao.cursor.execute(clausulaSql)
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao ler tipos de vinhos', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
 
         lista = []
 
-        row = self.cursor.fetchone()
+        row = self.conexao.cursor.fetchone()
         while row != None:
             lista.append([row[0], row[1]])
 
-            row = self.cursor.fetchone()
+            row = self.conexao.cursor.fetchone()
 
         return lista
 
@@ -39,18 +39,18 @@ class TipoVinho():
         clausulaSql += " upper(nometipovinho) like upper('%" + chave + "%') order by nometipovinho;"
 
         try:
-            self.cursor.execute(clausulaSql)
+            self.conexao.cursor.execute(clausulaSql)
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao pesquisar tipo de vinho', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
 
         lista = []
 
-        row = self.cursor.fetchone()
+        row = self.conexao.cursor.fetchone()
         while row != None:
             lista.append(str(row[0]) + '|' + row[1])
 
-            row = self.cursor.fetchone()
+            row = self.conexao.cursor.fetchone()
 
         return lista
 
@@ -61,7 +61,7 @@ class TipoVinho():
         clausulaSql += str(argId) + ';'
 
         try:
-            self.cursor.execute(clausulaSql)
+            self.conexao.cursor.execute(clausulaSql)
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao buscar tipo de vinho com ID ' + str(argId) + '!',
                                    wx.OK | wx.ICON_ERROR)
@@ -69,13 +69,10 @@ class TipoVinho():
 
         lista = []
 
-        row = self.cursor.fetchone()
+        row = self.conexao.cursor.fetchone()
         if row != None:
             lista.append(row[0])
             lista.append(row[1])
-            lista.append(row[2])
-            lista.append(row[3])
-            lista.append(row[4])
 
         return lista
 
@@ -90,8 +87,8 @@ class TipoVinho():
         clausulaSql += "'" + tiraAspas(self.nomeTipoVinho) + "');"
 
         try:
-            self.cursor.execute(clausulaSql)
-            self.con.commit()
+            self.conexao.cursor.execute(clausulaSql)
+            self.conexao.con.commit()
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao inserir dados do tipo de vinho!', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
@@ -102,8 +99,8 @@ class TipoVinho():
         clausulaSql += "where idtipovinho = " + str(argId) + ";"
 
         try:
-            self.cursor.execute(clausulaSql)
-            self.con.commit()
+            self.conexao.cursor.execute(clausulaSql)
+            self.conexao.con.commit()
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao atualizar os dados do tipo de vinho!', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
@@ -113,14 +110,14 @@ class TipoVinho():
         clausulaSql += 'where idtipovinho = ' + str(argId) + ';'
 
         try:
-            self.cursor.execute(clausulaSql)
-            self.con.commit()
+            self.conexao.cursor.execute(clausulaSql)
+            self.conexao.con.commit()
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao eliminar os dados do tipo de vinho!', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
 
     def sqlBuscaTamanho(self, coluna):
-        if self.banco == 'postgres':
+        if self.conexao.banco == 'postgres':
             clausulaSql = "select character_maximum_length from INFORMATION_SCHEMA.COLUMNS "
             clausulaSql += "where table_catalog = 'adega' and table_name = 'tipovinho'"
             clausulaSql += "and column_name = '" + coluna + "';"
@@ -129,8 +126,8 @@ class TipoVinho():
             clausulaSql += "where table_name = 'tipovinho' and column_name = '" + coluna + "';"
 
         try:
-            self.cursor.execute(clausulaSql)
-            row = self.cursor.fetchone()
+            self.conexao.cursor.execute(clausulaSql)
+            row = self.conexao.cursor.fetchone()
             while row != None:
                 return row[0]
         except:

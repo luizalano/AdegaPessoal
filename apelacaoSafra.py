@@ -1,6 +1,7 @@
 # coding: utf-8
 from pacotesMG.conectaDataBaseMG import *
 from pacotesMG.diversos import *
+from pacotesMG.dataBaseFunctionMG import *
 
 class ApelacaoSafra():
     idApelacaoSafra = 0
@@ -8,11 +9,11 @@ class ApelacaoSafra():
     nomeApelacao = ''
     safra = 0
     nota = 0
-    banco = 'mysql'
 
     def __init__(self):
-        self.con, self.cursor = conectaMySql('masteradega', 'Adeg@W!ne1', 'adega.mysql.uhserver.com', 'adega')
-        if self.con == None:
+        self.conexao = ConMG('parametros.json')
+
+        if self.conexao.con == None:
             sys.exit()
 
     def getAll(self):
@@ -21,18 +22,18 @@ class ApelacaoSafra():
         clausulaSql += 'order by a.nomeapelacao, aps.safra desc;'
 
         try:
-            self.cursor.execute(clausulaSql)
+            self.conexao.cursor.execute(clausulaSql)
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao ler safras por apelações', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
 
         lista = []
 
-        row = self.cursor.fetchone()
+        row = self.conexao.cursor.fetchone()
         while row != None:
             lista.append([row[0], row[1], row[2], row[3], row[4]])
 
-            row = self.cursor.fetchone()
+            row = self.conexao.cursor.fetchone()
 
         return lista
 
@@ -40,12 +41,12 @@ class ApelacaoSafra():
         clausulaSql  = 'select min(safra) from apelacaosafra'
 
         try:
-            self.cursor.execute(clausulaSql)
+            self.conexao.cursor.execute(clausulaSql)
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao ler safras por apelações', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
 
-        row = self.cursor.fetchone()
+        row = self.conexao.cursor.fetchone()
         while row != None:
             return row[0]
 
@@ -55,12 +56,12 @@ class ApelacaoSafra():
         clausulaSql = 'select max(safra) from apelacaosafra'
 
         try:
-            self.cursor.execute(clausulaSql)
+            self.conexao.cursor.execute(clausulaSql)
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao ler safras por apelações', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
 
-        row = self.cursor.fetchone()
+        row = self.conexao.cursor.fetchone()
         while row != None:
             return row[0]
         a = 0
@@ -73,7 +74,7 @@ class ApelacaoSafra():
         clausulaSql += argNomeApelacao + "';"
 
         try:
-            self.cursor.execute(clausulaSql)
+            self.conexao.cursor.execute(clausulaSql)
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao buscar safra ' + str(argSafra) + ' de ' + argNomeApelacao + '!',
                                    wx.OK | wx.ICON_ERROR)
@@ -81,7 +82,7 @@ class ApelacaoSafra():
 
         lista = []
 
-        row = self.cursor.fetchone()
+        row = self.conexao.cursor.fetchone()
         if row != None:
             lista.append(row[0])
             lista.append(row[1])
@@ -99,7 +100,7 @@ class ApelacaoSafra():
         clausulaSql += str(argId) + ';'
 
         try:
-            self.cursor.execute(clausulaSql)
+            self.conexao.cursor.execute(clausulaSql)
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao buscar safra de apelação com ID ' + str(argId) + '!',
                                    wx.OK | wx.ICON_ERROR)
@@ -107,7 +108,7 @@ class ApelacaoSafra():
 
         lista = []
 
-        row = self.cursor.fetchone()
+        row = self.conexao.cursor.fetchone()
         if row != None:
             lista.append(row[0])
             lista.append(row[1])
@@ -136,8 +137,8 @@ class ApelacaoSafra():
         clausulaSql += str(self.safra) + ");"
 
         try:
-            self.cursor.execute(clausulaSql)
-            self.con.commit()
+            self.conexao.cursor.execute(clausulaSql)
+            self.conexao.con.commit()
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao inserir dados da safra por apelação!', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
@@ -150,8 +151,8 @@ class ApelacaoSafra():
         clausulaSql += "where idapelacaoSafra = " + str(argId) + ";"
 
         try:
-            self.cursor.execute(clausulaSql)
-            self.con.commit()
+            self.conexao.cursor.execute(clausulaSql)
+            self.conexao.con.commit()
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao atualizar os dados da safra por apelação!', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
@@ -161,14 +162,14 @@ class ApelacaoSafra():
         clausulaSql += 'where idapelacaosafra = ' + str(argId) + ';'
 
         try:
-            self.cursor.execute(clausulaSql)
-            self.con.commit()
+            self.conexao.cursor.execute(clausulaSql)
+            self.conexao.con.commit()
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao eliminar os dados da safra por apelação!', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
 
     def sqlBuscaTamanho(self, coluna):
-        if self.banco == 'postgres':
+        if self.conexao.banco == 'postgres':
             clausulaSql = "select character_maximum_length from INFORMATION_SCHEMA.COLUMNS "
             clausulaSql += "where table_catalog = 'adega' and table_name = 'apelacaosafra'"
             clausulaSql += "and column_name = '" + coluna + "';"
@@ -177,8 +178,8 @@ class ApelacaoSafra():
             clausulaSql += "where table_name = 'apelacaosafra' and column_name = '" + coluna + "';"
 
         try:
-            self.cursor.execute(clausulaSql)
-            row = self.cursor.fetchone()
+            self.conexao.cursor.execute(clausulaSql)
+            row = self.conexao.cursor.fetchone()
             while row != None:
                 return row[0]
         except:

@@ -1,7 +1,5 @@
 # coding: utf-8
 from tipovinho import *
-from pacotesMG.conectaDataBaseMG import *
-
 from pacotesMG.wxComponetesMG import FrameMG
 import wx
 import wx.grid as gridlib

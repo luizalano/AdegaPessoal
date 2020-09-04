@@ -2,6 +2,7 @@
 import sys
 from pacotesMG.conectaDataBaseMG import *
 from pacotesMG.diversos import *
+from pacotesMG.dataBaseFunctionMG import *
 
 class Apelacao():
     idApelacao = 0
@@ -9,16 +10,12 @@ class Apelacao():
     corCasca = 0
     idPais = 0
     nomePais = ''
-    banco = 'mysql'
 
     def __init__(self):
 
-        #self.con, self.cursor = conectaMySql('masteradega', 'Adeg@W!ne1', 'adega.mysql.uhserver.com', 'adega')
-        listacon = conectaBanco('mysql', 'masteradega', 'Adeg@W!ne1', 'adega.mysql.uhserver.com', 'adega')
-        self.con = listacon[0]
-        self.cursor = listacon[1]
+        self.conexao = ConMG('parametros.json')
 
-        if self.con == None:
+        if self.conexao.con == None:
             sys.exit()
 
     def getAll(self):
@@ -27,18 +24,18 @@ class Apelacao():
         clausulaSql += 'order by a.nomeapelacao;'
 
         try:
-            self.cursor.execute(clausulaSql)
+            self.conexao.cursor.execute(clausulaSql)
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao ler apelações', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
 
         lista = []
 
-        row = self.cursor.fetchone()
+        row = self.conexao.cursor.fetchone()
         while row != None:
             lista.append([row[0], row[1], row[2], row[3]])
 
-            row = self.cursor.fetchone()
+            row = self.conexao.cursor.fetchone()
 
         return lista
 
@@ -47,18 +44,18 @@ class Apelacao():
         clausulaSql += " upper(nomeapelacao) like upper('%" + chave + "%') order by nomeapelacao;"
 
         try:
-            self.cursor.execute(clausulaSql)
+            self.conexao.cursor.execute(clausulaSql)
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao pesquisar apelação', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
 
         lista = []
 
-        row = self.cursor.fetchone()
+        row = self.conexao.cursor.fetchone()
         while row != None:
             lista.append(str(row[0]) + '|' + row[1])
 
-            row = self.cursor.fetchone()
+            row = self.conexao.cursor.fetchone()
 
         return lista
 
@@ -67,14 +64,14 @@ class Apelacao():
         clausulaSql += " upper(nomeapelacao) = upper('" + chave + "');"
 
         try:
-            self.cursor.execute(clausulaSql)
+            self.conexao.cursor.execute(clausulaSql)
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao pesquisar apelação', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
 
         lista = []
 
-        row = self.cursor.fetchone()
+        row = self.conexao.cursor.fetchone()
 
         if row != None:
             lista.clear()
@@ -90,7 +87,7 @@ class Apelacao():
         clausulaSql += str(argId) + ';'
 
         try:
-            self.cursor.execute(clausulaSql)
+            self.conexao.cursor.execute(clausulaSql)
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao buscar apelação com ID ' + str(argId) + '!',
                                    wx.OK | wx.ICON_ERROR)
@@ -98,7 +95,7 @@ class Apelacao():
 
         lista = []
 
-        row = self.cursor.fetchone()
+        row = self.conexao.cursor.fetchone()
         if row != None:
             lista.append(row[0])
             lista.append(row[1])
@@ -106,6 +103,25 @@ class Apelacao():
             lista.append(row[3])
 
         return lista
+
+    def buscaIdApelacao(self, argNome):
+        clausulaSql = "select idapelacao "
+        clausulaSql += "from apelacao where nomeapelacao = '" + argNome + "';"
+
+        try:
+            self.conexao.cursor.execute(clausulaSql)
+        except:
+            dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao buscar apelação pelo nome ' + argNome + '!',
+                                   wx.OK | wx.ICON_ERROR)
+            result = dlg.ShowModal()
+
+        row = self.conexao.cursor.fetchone()
+
+        idApelacao = 0
+        if row != None:
+            idApelacao =row[0]
+
+        return idApelacao
 
     def setidApelacao(self, arg):
         self.idApelacao = arg
@@ -122,8 +138,8 @@ class Apelacao():
         clausulaSql += str(self.idPais) + ");"
 
         try:
-            self.cursor.execute(clausulaSql)
-            self.con.commit()
+            self.conexao.cursor.execute(clausulaSql)
+            self.conexao.con.commit()
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao inserir dados da apelação!', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
@@ -135,8 +151,8 @@ class Apelacao():
         clausulaSql += "where idapelacao = " + str(argId) + ";"
 
         try:
-            self.cursor.execute(clausulaSql)
-            self.con.commit()
+            self.conexao.cursor.execute(clausulaSql)
+            self.conexao.con.commit()
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao atualizar os dados da apelação!', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
@@ -146,14 +162,14 @@ class Apelacao():
         clausulaSql += 'where idapelacao = ' + str(argId) + ';'
 
         try:
-            self.cursor.execute(clausulaSql)
-            self.con.commit()
+            self.conexao.cursor.execute(clausulaSql)
+            self.conexao.con.commit()
         except:
             dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao eliminar os dados da apelação!', wx.OK | wx.ICON_ERROR)
             result = dlg.ShowModal()
 
     def sqlBuscaTamanho(self, coluna):
-        if self.banco == 'postgres':
+        if self.conexao.banco == 'postgres':
             clausulaSql = "select character_maximum_length from INFORMATION_SCHEMA.COLUMNS "
             clausulaSql += "where table_catalog = 'adega' and table_name = 'apelacao'"
             clausulaSql += "and column_name = '" + coluna + "';"
@@ -162,8 +178,8 @@ class Apelacao():
             clausulaSql += "where table_name = 'apelacao' and column_name = '" + coluna + "';"
 
         try:
-            self.cursor.execute(clausulaSql)
-            row = self.cursor.fetchone()
+            self.conexao.cursor.execute(clausulaSql)
+            row = self.conexao.cursor.fetchone()
             while row != None:
                 return row[0]
         except:
