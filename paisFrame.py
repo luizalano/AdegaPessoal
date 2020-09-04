@@ -1,6 +1,5 @@
 # coding: utf-8
 from pais import *
-from pacotesMG.conectaDataBaseMG import *
 
 from pacotesMG.wxComponetesMG import FrameMG
 import wx
