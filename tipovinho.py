@@ -76,6 +76,26 @@ class TipoVinho():
 
         return lista
 
+    def buscaTipoVinhoPorNome(self, argId):
+        clausulaSql  = "select idtipovinho, nometipovinho from tipovinho where nometipovinho = '"
+        clausulaSql += tiraAspas(argId) + "';"
+
+        try:
+            self.conexao.cursor.execute(clausulaSql)
+        except:
+            dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao buscar tipo de vinho por nome ' + argId + '!',
+                                   wx.OK | wx.ICON_ERROR)
+            result = dlg.ShowModal()
+
+        lista = []
+
+        row = self.conexao.cursor.fetchone()
+        if row != None:
+            lista.append(row[0])
+            lista.append(row[1])
+
+        return lista
+
     def setidTipoVinho(self, arg):
         self.idTipoVinho = arg
 

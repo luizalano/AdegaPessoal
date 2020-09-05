@@ -48,6 +48,40 @@ class Tenuta():
 
         return lista
 
+    def buscaTenutaPorNome(self, chave):
+        clausulaSql = "select t.idtenuta, t.nometenuta, t.idpais, p.nomepais, t.regiao, t.cidade, t.estado, " \
+                      "t.endereco1, t.endereco2, t.endereco3, t.cep, t.telefone, t.email, t.contato " \
+                      "from tenuta as t join pais as p on t.idpais = p.idpais where t.nometenuta = '" + chave + "';"
+
+        try:
+            self.conexao.cursor.execute(clausulaSql)
+        except:
+            dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao buscar tenuta pelo nome ' + chave + '!',
+                                   wx.OK | wx.ICON_ERROR)
+            result = dlg.ShowModal()
+
+        lista = []
+
+        row = self.conexao.cursor.fetchone()
+        if row != None:
+            lista.append(row[0])
+            lista.append(row[1])
+            lista.append(row[2])
+            lista.append(row[3])
+            lista.append(row[4])
+            lista.append(row[5])
+            lista.append(row[6])
+            lista.append(row[7])
+            lista.append(row[8])
+            lista.append(row[9])
+            lista.append(row[10])
+            lista.append(row[11])
+            lista.append(row[12])
+            lista.append(row[13])
+
+        return lista
+
+
     def buscaTenuta(self, argId):
         clausulaSql  = 'select t.idtenuta, t.nometenuta, t.idpais, p.nomepais, t.regiao, t.cidade, t.estado, '
         clausulaSql += 't.endereco1, t.endereco2, t.endereco3, t.cep, t.telefone, t.email, t.contato '

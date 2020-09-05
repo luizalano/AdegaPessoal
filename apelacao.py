@@ -18,10 +18,26 @@ class Apelacao():
         if self.conexao.con == None:
             sys.exit()
 
-    def getAll(self):
-        clausulaSql  = 'select a.idapelacao, a.nomeapelacao, a.idpais, p.nomepais '
-        clausulaSql += 'from apelacao as a join pais as p on a.idpais = p.idpais '
-        clausulaSql += 'order by a.nomeapelacao;'
+    def getAll(self, **kwargs):
+        '''
+
+        :param kwargs:
+            idpais
+            nomepais
+        :return:
+        '''
+
+        onde =""
+        if len(kwargs) > 0:
+            if 'nomepais' in kwargs:
+                onde = "where p.nomepais = '" +  kwargs['nomepais'] + "' "
+            if 'idpais' in kwargs:
+                onde = "where a.idpais = " +  str(kwargs['idpais']) + " "
+
+
+        clausulaSql  = "select a.idapelacao, a.nomeapelacao, a.idpais, p.nomepais " \
+                       "from apelacao as a join pais as p on a.idpais = p.idpais "
+        clausulaSql += onde + "order by a.nomeapelacao;"
 
         try:
             self.conexao.cursor.execute(clausulaSql)
