@@ -57,6 +57,24 @@ class Uva():
 
         return lista
 
+    def getIdPorNome(self, chave):
+        clausulaSql = "select iduva from uva where "
+        clausulaSql += " upper(nomeuva) = upper('" + chave + "') order by nomeuva;"
+
+        try:
+            self.conexao.cursor.execute(clausulaSql)
+        except:
+            dlg = wx.MessageDialog(None, clausulaSql, 'Erro ao pesquisar uva', wx.OK | wx.ICON_ERROR)
+            result = dlg.ShowModal()
+
+        lista = []
+
+        row = self.conexao.cursor.fetchone()
+        if row != None:
+            return row[0]
+
+        return 0
+
     def buscaUva(self, argId):
         clausulaSql  = 'select u.iduva, u.nomeuva, u.corcasca, u.idpais, p.nomepais '
         clausulaSql += 'from uva as u join pais as p on u.idpais = p.idpais '

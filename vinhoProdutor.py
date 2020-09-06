@@ -220,11 +220,11 @@ class VinhoProdutor():
     def sqlBuscaTamanho(self, coluna):
         if self.conexao.banco == 'postgres':
             clausulaSql = "select character_maximum_length from INFORMATION_SCHEMA.COLUMNS "
-            clausulaSql += "where table_catalog = 'adega' and table_name = 'vinhoProdutor'"
+            clausulaSql += "where table_catalog = 'adega' and table_name = 'vinhoprodutor'"
             clausulaSql += "and column_name = '" + coluna + "';"
         else:
             clausulaSql = "select character_maximum_length from INFORMATION_SCHEMA.COLUMNS "
-            clausulaSql += "where table_name = 'vinhoProdutor' and column_name = '" + coluna + "';"
+            clausulaSql += "where table_name = 'vinhoprodutor' and column_name = '" + coluna + "';"
 
         try:
             self.conexao.cursor.execute(clausulaSql)
